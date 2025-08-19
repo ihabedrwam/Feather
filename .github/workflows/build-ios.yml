@@ -1,0 +1,36 @@
+name: Build Feather IPA
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Install CocoaPods (falls benötigt)
+        run: |
+          gem install cocoapods
+          pod install --project-directory=. || true
+
+      - name: Build IPA
+        run: |
+          xcodebuild -workspace Feather.xcworkspace \
+            -scheme Feather \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath build/Feather.xcarchive archive
+
+          xcodebuild -exportArchive \
+            -archivePath build/Feather.xcarchive \
+            -exportOptionsPlist ExportOptions.plist \
+            -exportPath build
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v3
+        with:
+          name: Feather-IPA
+          path: build/*.ipa
